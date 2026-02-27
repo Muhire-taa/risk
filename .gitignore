@@ -1,0 +1,8 @@
+*.csv
+*.ipynb
+*.enc
+.DS_Store
+__pycache__/
+*.pyc
+extract_model.py
+.ipynb_checkpoints/
