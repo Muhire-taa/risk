@@ -318,38 +318,13 @@ def main():
         st.divider()
 
         card_class = "card-poor" if pred == 1 else "card-nonpoor"
-        col_a, col_b = st.columns(2)
-        with col_a:
-            st.markdown(
-                f'<div class="result-card {card_class}">'
-                f'<div class="label">Predicted Status</div>'
-                f'<div class="value">{label}</div>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-        with col_b:
-            st.markdown(
-                f'<div class="result-card card-prob">'
-                f'<div class="label">Probability of Poor</div>'
-                f'<div class="value">{prob:.1%}</div>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-
-        if pred == 1:
-            st.markdown(
-                f'<div style="background:#fee2e2; border:1px solid #ef4444; border-radius:8px; padding:14px 18px; color:#991b1b; font-size:1rem; font-weight:500;">'
-                f'The household is predicted as <strong>Poor</strong> with {prob:.1%} probability.'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown(
-                f'<div style="background:#d1fae5; border:1px solid #10b981; border-radius:8px; padding:14px 18px; color:#065f46; font-size:1rem; font-weight:500;">'
-                f'The household is predicted as <strong>Non-Poor</strong> with {1-prob:.1%} confidence.'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
+        st.markdown(
+            f'<div class="result-card {card_class}">'
+            f'<div class="label">Predicted Status</div>'
+            f'<div class="value">{label}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
 
 if __name__ == "__main__":
