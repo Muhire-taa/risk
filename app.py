@@ -252,7 +252,7 @@ def main():
     )
 
     st.title("Poverty Status Predictor")
-    st.caption("Deployed ML model using Streamlit")
+    st.caption("")
 
     if not os.path.isfile(MODEL_FILE):
         st.error(
