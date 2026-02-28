@@ -37,6 +37,39 @@ def predict(X, weights, activations, scaler_mean, scaler_scale):
     return float(x.flatten()[0])
 
 
+def compute_contributions(X, weights, activations, scaler_mean, scaler_scale, features):
+    """Leave-one-at-baseline perturbation: replace each feature with its mean
+    and measure the change in prediction to quantify its contribution."""
+    baseline = scaler_mean.copy().reshape(1, -1)
+    full_prob = predict(X, weights, activations, scaler_mean, scaler_scale)
+    contributions = {}
+    for i, feat in enumerate(features):
+        X_pert = X.copy()
+        X_pert[0, i] = baseline[0, i]
+        pert_prob = predict(X_pert, weights, activations, scaler_mean, scaler_scale)
+        contributions[feat] = full_prob - pert_prob
+    return contributions
+
+
+FEATURE_LABELS = {
+    "hhedyrs": "Education (years)",
+    "hhsex": "Sex of HH Head",
+    "region": "Region",
+    "mstat": "Marital Status",
+    "hhage": "Age",
+    "CB02": "Income Frequency",
+    "hsize": "Household Size",
+    "urban": "Urban / Rural",
+    "HC08a": "Water Source Distance",
+    "IT5_3": "Financial Services Dist.",
+    "pwall": "Wall Material",
+    "pfloor": "Floor Material",
+    "room": "Sleeping Rooms",
+    "ha03_11": "Owns Mobile Phone",
+    "ha03_9": "Owns Radio",
+}
+
+
 FIELDS = [
     {
         "key": "hhedyrs",
@@ -325,6 +358,53 @@ def main():
             f'</div>',
             unsafe_allow_html=True,
         )
+
+        st.subheader("Feature Contributions")
+        st.markdown(
+            '<p style="font-size:0.85rem;color:#666!important;margin-bottom:16px;">'
+            'How each feature shifted the prediction relative to the average household. '
+            'Positive (red) pushes toward <strong>Poor</strong>, negative (green) pushes toward <strong>Non-Poor</strong>.'
+            '</p>',
+            unsafe_allow_html=True,
+        )
+
+        contribs = compute_contributions(X, weights, activations, scaler_mean, scaler_scale, features)
+        sorted_feats = sorted(contribs, key=lambda f: abs(contribs[f]), reverse=True)
+
+        max_abs = max(abs(v) for v in contribs.values()) or 1e-9
+        max_bar_pct = 45
+        bar_rows = []
+        for feat in sorted_feats:
+            val = contribs[feat]
+            readable = FEATURE_LABELS.get(feat, feat)
+            pct = min((abs(val) / max_abs) * max_bar_pct, max_bar_pct)
+            if val >= 0:
+                bar_style = f"width:{pct:.1f}%;margin-left:50%;background:#ef4444;height:18px;border-radius:0 6px 6px 0;"
+            else:
+                bar_style = (
+                    f"width:{pct:.1f}%;margin-left:{50-pct:.1f}%;background:#10b981;"
+                    f"height:18px;border-radius:6px 0 0 6px;"
+                )
+            sign = "+" if val >= 0 else ""
+            bar_rows.append(
+                f'<div style="display:flex;align-items:center;margin-bottom:6px;gap:12px;">'
+                f'<span style="min-width:200px;flex-shrink:0;font-size:0.82rem;font-weight:600;color:#333!important;text-align:right;">{readable}</span>'
+                f'<div style="flex:1;background:#f3f4f6;border-radius:6px;position:relative;height:18px;overflow:hidden;">'
+                f'<div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:#aaa;z-index:1;"></div>'
+                f'<div style="{bar_style}"></div>'
+                f'</div>'
+                f'<span style="min-width:70px;flex-shrink:0;font-size:0.78rem;color:#555!important;text-align:right;">{sign}{val:.3f}</span>'
+                f'</div>'
+            )
+
+        st.markdown("\n".join(bar_rows), unsafe_allow_html=True)
+
+        top3 = sorted_feats[:3]
+        top3_str = ", ".join(
+            f"**{FEATURE_LABELS.get(f, f)}** ({'+' if contribs[f] >= 0 else ''}{contribs[f]:.3f})"
+            for f in top3
+        )
+        # st.markdown(f"**Top contributing features:** {top3_str}")
 
 
 if __name__ == "__main__":
